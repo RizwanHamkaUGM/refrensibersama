@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReferensiBersama</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f5f5f5; /* Mengubah warna latar belakang untuk kontras lebih baik */
+            font-family: Arial, sans-serif;
+        }
+        
+        
+        h1 {
+            color: #3b3bfc;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .content {
+            width: 80%;
+            max-width: 600px; /* Mengatur lebar maksimum */
+            background-color: #3b3bfc;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column; /* Menyusun secara vertikal */
+            color: white;
+            font-size: 18px;
+            padding: 20px; /* Menambahkan padding */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Menambahkan bayangan */
+            margin-bottom: 20px; /* Jarak di bawah area konten */
+        }
+
+        .input-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-container input {
+            width: 300px;
+            height: 40px;
+            border: 2px solid #3b3bfc;
+            border-radius: 20px;
+            text-align: center;
+            font-size: 16px;
+            color: #3b3bfc;
+            background-color: white;
+            margin-right: 10px; /* Menambahkan margin kanan untuk input */
+        }
+
+        .submit-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            background-color: #3b3bfc;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .submit-button:hover {
+            background-color: #2a2ac8;
+            transform: translateY(-2px);
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            visibility: hidden;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .long-message {
+            width: 100%; /* Lebar penuh */
+            background-color: #cce5ff; /* Warna latar belakang biru */
+            border: 2px solid #007bff; /* Warna border biru */
+            border-radius: 10px; /* Sudut melengkung */
+            padding: 10px; /* Ruang di dalam kotak */
+            margin-top: 10px; /* Jarak di atas kotak pesan panjang */
+            font-size: 16px; /* Ukuran font */
+            color: #000; /* Warna teks */
+        }
+
+        /* Responsive adjustments for mobile view */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 24px;
+            }
+            .content {
+                width: 90%;
+                font-size: 16px;
+                padding: 15px; /* Mengurangi padding untuk tampilan mobile */
+            }
+            .input-container {
+                flex-direction: column;
+                align-items: stretch; /* Menyusun agar elemen mengisi lebar penuh */
+            }
+            .input-container input {
+                width: 100%; /* Membuat input mengisi lebar penuh */
+                margin-bottom: 10px;
+            }
+            .submit-button {
+                width: 100%; /* Membuat tombol mengisi lebar penuh */
+            }
+            .error-message {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>ReferensiBersama</h1>
+    <div class="content" id="contentArea">
+        <div id="defaultMessage">Kirim pesan di bawah ini!</div>
+    </div>
+    <div class="input-container">
+        <input type="text" id="inputPesan" placeholder="Ketik pesan di sini">
+        <button class="submit-button" id="submitButton">Kirim</button>
+    </div>
+    <div class="error-message" id="errorMessage">Pesan tidak boleh kosong!</div>
+
+    <script>
+        document.getElementById('submitButton').addEventListener('click', function() {
+            const pesan = document.getElementById('inputPesan').value.trim();
+            const errorMessage = document.getElementById('errorMessage');
+            const contentArea = document.getElementById('contentArea');
+            const defaultMessage = document.getElementById('defaultMessage');
+
+            // Clear any previous long message
+            const longMessageContainer = document.getElementById('longMessageContainer');
+            if (longMessageContainer) {
+                longMessageContainer.remove();
+            }
+
+            if (pesan) {
+                errorMessage.style.visibility = 'hidden';
+
+                // Check if the message exceeds 100 words
+                const wordCount = pesan.split(/\s+/).length;
+
+                if (wordCount > 100) {
+                    const longMessageDiv = document.createElement('div');
+                    longMessageDiv.id = 'longMessageContainer';
+                    longMessageDiv.className = 'long-message';
+                    longMessageDiv.textContent = 'Pesan Anda lebih dari 100 kata: ' + pesan;
+                    contentArea.appendChild(longMessageDiv);
+                } else {
+                    // Send the message to the Flask API
+                    fetch('http://127.0.0.1:5000/send_message', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ message: pesan })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Display the response in the content area
+                        defaultMessage.textContent = data.response; // Ganti teks default dengan respons
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        defaultMessage.textContent = 'Terjadi kesalahan, coba lagi.';
+                    });
+                }
+
+                // Clear the input field
+                document.getElementById('inputPesan').value = '';
+            } else {
+                errorMessage.style.visibility = 'visible';
+            }
+        });
+    </script>
+</body>
+</html>
